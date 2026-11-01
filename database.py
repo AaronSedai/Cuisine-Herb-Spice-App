@@ -1,3 +1,4 @@
+from herb_data import herb_spice_details
 from sqlmodel import SQLModel, Field, create_engine, Session, select
 
 DATABASE_URL = "sqlite:///herb_spice.db"
@@ -32,7 +33,19 @@ def show_herbs():
 def show_schema():
     print(HerbSpice.model_fields.keys())
 
+def import_herbs():
+    with Session(engine) as session:
+        for name, details in herb_spice_details.items():
+            herb = HerbSpice(
+                name=name,
+                flavor_profile=details['flavor-profile'],
+                cuisine=", ".join(details['cuisine']),
+                pairings=", ".join(details['pairings'])
+            )
+            session.add(herb)
+        session.commit()
+        print(f"Imported {len(herb_spice_details)} herbs and spices.")
+
 create_db_and_tables()
-show_schema()
-# add_test_herb()
-# show_herbs()
+# show_schema()
+import_herbs()
