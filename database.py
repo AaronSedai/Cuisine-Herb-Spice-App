@@ -46,6 +46,14 @@ def import_herbs():
         session.commit()
         print(f"Imported {len(herb_spice_details)} herbs and spices.")
 
+def show_database_count():
+    with Session(engine) as session:
+        statement = select(HerbSpice)
+        herbs = session.exec(statement).all()
+
+        print(f"Herbs and spices in database: {len(herbs)}")
+
 create_db_and_tables()
 # show_schema()
-import_herbs()
+# import_herbs()
+show_database_count()

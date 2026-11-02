@@ -1,3 +1,6 @@
+from sqlmodel import Session, select
+from database import engine, HerbSpice
+
 from fastapi import FastAPI
 from herb_data import herb_spice_details
 app = FastAPI()
@@ -6,22 +9,22 @@ app = FastAPI()
 def read_root():
     return {"message": "Hello Aaron - your FastAPI is running!"}
 
-    #
 
 herb_spice_synonyms = {
-    "Kaffir Lime": "Makrut Lime",
-    "Black Seed": "Black Cumin",
-    "Pimenta Dioica": "Allspice",
-    "Ramp": "Wild Onion",
-    "Mentha Spicata": "Spearmint",
-    "Mentha Arvensis": "Wild Mint",
-    "Mentha Canadensis": "Horsemint",
-    "California Laurel": "California Bay",
-    "Sweet Flag": "Loveroot",
-    "Curcuma Zedoaria": "Zedoary",
-    "Curcuma Longa": "Turmeric",
-    "Wasabia Japonica": "Wasabi"
-},
+    "kaffir lime": "Makrut Lime",
+    "black seed": "Black Cumin",
+    "pimenta dioica": "Allspice",
+    "ramp": "Wild Onion",
+    "mentha spicata": "Spearmint",
+    "mentha arvensis": "Wild Mint",
+    "mentha canadensis": "Horsemint",
+    "california laurel": "California Bay",
+    "sweet flag": "Loveroot",
+    "curcuma zedoaria": "Zedoary",
+    "curcuma longa": "Turmeric",
+    "wasabia japonica": "Wasabi"
+}
+
 
     #define list once outside the function
 herbs_and_spices = list(herb_spice_details.keys())
@@ -105,24 +108,27 @@ def get_herbs_and_spices():
 @app.get("/herbs-and-spices/{name}")
 def get_herbs_and_spices(name: str):
         # normalize input for matching
+
     normalized = name.lower()
+
     if normalized in herb_spice_synonyms:
-        canonical_name = herb_spice_synonyms[normalized]
-        return {
-            "item": canonical_name,
-            "details": herb_spice_details[canonical_name]
-        }
-        # find the herb/spice
-    for key in herb_spice_details:
-        if key.lower() == normalized:
-            return {
-                "item": key,
-                "details": herb_spice_details[key]
-            }
-        # if not found
+        name = herb_spice_synonyms[normalized]
+    with Session(engine) as session:
+       statement = select(HerbSpice)
+       herbs = session.exec(statement).all()
+
+       for herb in herbs:
+           if herb.name.lower() == name.lower():
+               return {
+                   "item": herb.name,
+                   "flavor_profile": herb.flavor_profile,
+                   "cuisine": herb.cuisine,
+                   "pairings": herb.pairings
+               }
     return {
-        "error": f"'{name}' not found in the herbs and spices list."
+        "error": f"'{name}' not found in the herbs and spices database."
     }
+
 @app.get("/cuisines/{cuisine}")
 def get_cuisine_items(cuisine: str):
     normalized = cuisine.lower()
